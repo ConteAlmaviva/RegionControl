@@ -2,12 +2,12 @@ require 'common'
 
 _addon.author   = 'Almavivaconte';
 _addon.name     = 'RegionControl';
-_addon.version  = '0.0.1';
+_addon.version  = '4.0.0';
 
 local control_table = {}
 
 local default_settings = {
-    quiet = false
+    quiet = true
 }
 
 local ARAGONEU = {
@@ -194,12 +194,12 @@ local ZULKHEIM = {
 
 function sendConquestUpdateRequest() --Needed on initial load to solicit a conquest update and build the region control table; otherwise conquest updates are sent on zone and periodically as well as when the conquest map (/rmap) is accessed
     local packet = struct.pack('bbbb', 0x05A, 0, 0, 0):totable()
-    AddOutgoingPacket(0x05A, packet)
+    AshitaCore:PacketManager():AddOutgoingPacket(0x05A, packet)
 end;
 
 function setControl()
-    local playernation = AshitaCore:GetDataManager():GetPlayer():GetNation() + 1;
-    local playerzone = AshitaCore:GetDataManager():GetParty():GetMemberZone(0);
+    local playernation = AshitaCore:GetMemoryManager():GetPlayer():GetNation() + 1;
+    local playerzone = AshitaCore:GetMemoryManager():GetParty():GetMemberZone(0);
     local zonecontrol = nil;
     if playernation == 1 then
         nationname = "San d'Oria"
@@ -210,15 +210,20 @@ function setControl()
     else
         nationname = "UNKNOWN"
     end
+    if control_table[playerzone] ~= nil then
+        AshitaCore:GetChatManager():QueueCommand(0, "/ac var set conquestzone true")
+    else
+        AshitaCore:GetChatManager():QueueCommand(0, "/ac var set conquestzone false")
+    end
     if playernation == control_table[playerzone] then
-        AshitaCore:GetChatManager():QueueCommand("/ac var set regioncontrol true", 0)
+        AshitaCore:GetChatManager():QueueCommand(0, "/ac var set regioncontrol true")
         if not quiet then
-            AshitaCore:GetChatManager():QueueCommand("/echo " .. nationname .. " controls this zone, setting Ashitacast variable regioncontrol to true.", 0)
+            AshitaCore:GetChatManager():QueueCommand(0, "/echo " .. nationname .. " controls this zone, setting Ashitacast variable regioncontrol to true.")
         end
     else
-        AshitaCore:GetChatManager():QueueCommand("/ac var set regioncontrol false", 0)
+        AshitaCore:GetChatManager():QueueCommand(0, "/ac var set regioncontrol false")
         if not quiet then
-            AshitaCore:GetChatManager():QueueCommand("/echo " .. nationname .. " does not control this zone, setting Ashitacast variable regioncontrol to false.", 0)
+            AshitaCore:GetChatManager():QueueCommand(0, "/echo " .. nationname .. " does not control this zone, setting Ashitacast variable regioncontrol to false.")
         end
     end
 end;
@@ -243,28 +248,28 @@ end);
 
 
 
-ashita.register_event('incoming_packet', function(id, size, data, modified, blocked)
+ashita.events.register('packet_in', 'packet_in_cb', function (e)
     
-    if (id == 0x05E) then
-        control_table['Ronfaure'] = struct.unpack('B', data, 0x1E)
-        control_table['Zulkheim'] = struct.unpack('B', data, 0x22)
-        control_table['Norvallen'] = struct.unpack('B', data, 0x26)
-        control_table['Gustaberg'] = struct.unpack('B', data, 0x2A)
-        control_table['Derfland'] = struct.unpack('B', data, 0x2E)
-        control_table['Sarutabaruta'] = struct.unpack('B', data, 0x32)
-        control_table['Kolshushu'] = struct.unpack('B', data, 0x36)
-        control_table['Aragoneu'] = struct.unpack('B', data, 0x3A)
-        control_table['Fauregandi'] = struct.unpack('B', data, 0x3E)
-        control_table['Valdeaunia'] = struct.unpack('B', data, 0x42)
-        control_table['Qufim'] = struct.unpack('B', data, 0x46)
-        control_table['LiTelor'] = struct.unpack('B', data, 0x4A)
-        control_table['Kuzotz'] = struct.unpack('B', data, 0x4E)
-        control_table['Vollbow'] = struct.unpack('B', data, 0x52)
-        control_table['ElshimoLow'] = struct.unpack('B', data, 0x56)
-        control_table['ElshimoUp'] = struct.unpack('B', data, 0x5A)
-        control_table['TuLia'] = struct.unpack('B', data, 0x5E)
-        control_table['Movapolos'] = struct.unpack('B', data, 0x62)
-        control_table['Tavnazian'] = struct.unpack('B', data, 0x66)
+    if (e.id == 0x05E) then
+        control_table['Ronfaure'] = struct.unpack('B', e.data, 0x1E)
+        control_table['Zulkheim'] = struct.unpack('B', e.data, 0x22)
+        control_table['Norvallen'] = struct.unpack('B', e.data, 0x26)
+        control_table['Gustaberg'] = struct.unpack('B', e.data, 0x2A)
+        control_table['Derfland'] = struct.unpack('B', e.data, 0x2E)
+        control_table['Sarutabaruta'] = struct.unpack('B', e.data, 0x32)
+        control_table['Kolshushu'] = struct.unpack('B', e.data, 0x36)
+        control_table['Aragoneu'] = struct.unpack('B', e.data, 0x3A)
+        control_table['Fauregandi'] = struct.unpack('B', e.data, 0x3E)
+        control_table['Valdeaunia'] = struct.unpack('B', e.data, 0x42)
+        control_table['Qufim'] = struct.unpack('B', e.data, 0x46)
+        control_table['LiTelor'] = struct.unpack('B', e.data, 0x4A)
+        control_table['Kuzotz'] = struct.unpack('B', e.data, 0x4E)
+        control_table['Vollbow'] = struct.unpack('B', e.data, 0x52)
+        control_table['ElshimoLow'] = struct.unpack('B', e.data, 0x56)
+        control_table['ElshimoUp'] = struct.unpack('B', e.data, 0x5A)
+        control_table['TuLia'] = struct.unpack('B', e.data, 0x5E)
+        control_table['Movapolos'] = struct.unpack('B', e.data, 0x62)
+        control_table['Tavnazian'] = struct.unpack('B', e.data, 0x66)
         for k,v in pairs(ARAGONEU) do
             control_table[tonumber(v)] = control_table['Aragoneu']
         end
@@ -331,7 +336,7 @@ ashita.register_event('incoming_packet', function(id, size, data, modified, bloc
         for k,v in pairs(ZULKHEIM) do
             control_table[tonumber(v)] = control_table['Zulkheim']
         end
-        ashita.timer.once(2, setControl)
+        ashita.tasks.once(2, setControl)
     end
     
     return false;
@@ -339,7 +344,7 @@ ashita.register_event('incoming_packet', function(id, size, data, modified, bloc
 end);
 
 ashita.register_event('command', function(command, ntype)
-    local args = command:args();
+    local args = e.command:args();
     if args[1] == '/rc' then
         if args[2] == 'quiet' then
             quiet = not quiet
