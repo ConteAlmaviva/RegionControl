@@ -191,15 +191,35 @@ local ZULKHEIM = {
         248,
         103
 }
+local DYNAMIS = {
+        39,
+        40,
+        41,
+        42,
+        134,
+        135,
+        185,
+        186,
+        187,
+        188
+}
+local LUMORIA = {
+        33,
+        34,
+        35,
+        36,
+        37,
+        38
+}
 
 function sendConquestUpdateRequest() --Needed on initial load to solicit a conquest update and build the region control table; otherwise conquest updates are sent on zone and periodically as well as when the conquest map (/rmap) is accessed
     local packet = struct.pack('bbbb', 0x05A, 0, 0, 0):totable()
-    AshitaCore:PacketManager():AddOutgoingPacket(0x05A, packet)
+    AddOutgoingPacket(0x05A, packet)
 end;
 
 function setControl()
-    local playernation = AshitaCore:GetMemoryManager():GetPlayer():GetNation() + 1;
-    local playerzone = AshitaCore:GetMemoryManager():GetParty():GetMemberZone(0);
+    local playernation = AshitaCore:GetDataManager():GetPlayer():GetNation() + 1;
+    local playerzone = AshitaCore:GetDataManager():GetParty():GetMemberZone(0);
     local zonecontrol = nil;
     if playernation == 1 then
         nationname = "San d'Oria"
@@ -211,19 +231,19 @@ function setControl()
         nationname = "UNKNOWN"
     end
     if control_table[playerzone] ~= nil then
-        AshitaCore:GetChatManager():QueueCommand(0, "/ac var set conquestzone true")
+        AshitaCore:GetChatManager():QueueCommand("/ac var set conquestzone true", 0)
     else
-        AshitaCore:GetChatManager():QueueCommand(0, "/ac var set conquestzone false")
+        AshitaCore:GetChatManager():QueueCommand("/ac var set conquestzone false", 0)
     end
     if playernation == control_table[playerzone] then
-        AshitaCore:GetChatManager():QueueCommand(0, "/ac var set regioncontrol true")
+        AshitaCore:GetChatManager():QueueCommand("/ac var set regioncontrol true", 0)
         if not quiet then
-            AshitaCore:GetChatManager():QueueCommand(0, "/echo " .. nationname .. " controls this zone, setting Ashitacast variable regioncontrol to true.")
+            AshitaCore:GetChatManager():QueueCommand("/echo " .. nationname .. " controls this zone, setting Ashitacast variable regioncontrol to true.", 0)
         end
     else
-        AshitaCore:GetChatManager():QueueCommand(0, "/ac var set regioncontrol false")
+        AshitaCore:GetChatManager():QueueCommand("/ac var set regioncontrol false", 0)
         if not quiet then
-            AshitaCore:GetChatManager():QueueCommand(0, "/echo " .. nationname .. " does not control this zone, setting Ashitacast variable regioncontrol to false.")
+            AshitaCore:GetChatManager():QueueCommand("/echo " .. nationname .. " does not control this zone, setting Ashitacast variable regioncontrol to false.", 0)
         end
     end
 end;
@@ -336,7 +356,13 @@ ashita.events.register('packet_in', 'packet_in_cb', function (e)
         for k,v in pairs(ZULKHEIM) do
             control_table[tonumber(v)] = control_table['Zulkheim']
         end
-        ashita.tasks.once(2, setControl)
+        for k,v in pairs(DYNAMIS) do
+            control_table[tonumber(v)] = 0
+        end
+        for k,v in pairs(LUMORIA) do
+            control_table(tonumber(v)] = 0
+        end
+        ashita.timer.once(2, setControl)
     end
     
     return false;
